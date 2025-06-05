@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -129,6 +130,7 @@ type SSEServer struct {
 	srv                          *http.Server
 	contextFunc                  SSEContextFunc
 	dynamicBasePathFunc          DynamicBasePathFunc
+	tlsConfig                    *tls.Config
 
 	keepAlive         bool
 	keepAliveInterval time.Duration
@@ -236,6 +238,13 @@ func WithHTTPServer(srv *http.Server) SSEOption {
 	}
 }
 
+func WithTLSConfig(c *tls.Config) SSEOption {
+	return func(s *SSEServer) {
+		if s.srv != nil {
+			s.srv.TLSConfig = c
+		}
+	}
+}
 func WithKeepAliveInterval(keepAliveInterval time.Duration) SSEOption {
 	return func(s *SSEServer) {
 		s.keepAlive = true
@@ -294,11 +303,17 @@ func (s *SSEServer) Start(addr string) error {
 			Addr:    addr,
 			Handler: s,
 		}
+		if s.tlsConfig != nil {
+			s.srv.TLSConfig = s.tlsConfig
+		}
 	} else {
 		if s.srv.Addr == "" {
 			s.srv.Addr = addr
 		} else if s.srv.Addr != addr {
 			return fmt.Errorf("conflicting listen address: WithHTTPServer(%q) vs Start(%q)", s.srv.Addr, addr)
+		}
+		if s.tlsConfig != nil {
+			s.srv.TLSConfig = s.tlsConfig
 		}
 	}
 	srv := s.srv
