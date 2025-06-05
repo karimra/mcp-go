@@ -240,6 +240,7 @@ func WithHTTPServer(srv *http.Server) SSEOption {
 
 func WithTLSConfig(c *tls.Config) SSEOption {
 	return func(s *SSEServer) {
+		s.tlsConfig = c
 		if s.srv != nil {
 			s.srv.TLSConfig = c
 		}
