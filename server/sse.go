@@ -320,6 +320,9 @@ func (s *SSEServer) Start(addr string) error {
 	srv := s.srv
 	s.mu.Unlock()
 
+	if s.tlsConfig != nil {
+		return srv.ListenAndServeTLS("", "")
+	}
 	return srv.ListenAndServe()
 }
 
